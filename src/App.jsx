@@ -1,18 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AuraGoldWeb() {
   const [activeTab, setActiveTab] = useState('inicio');
   const [copied, setCopied] = useState(false);
-  
-  // Estado para el simulador de conversión
   const [solInput, setSolInput] = useState('1');
+  
+  // Estado para el precio en tiempo real (inicia con un precio base por si falla la API)
+  const [solPriceUsd, setSolPriceUsd] = useState(73.73); 
+  const argPriceUsd = 0.01;
 
   const walletCustodia = "2NjhoA5TKiVKja9Gq8iPht5ya5Ho8yo2AEUbv37aGDTa";
   const mintAddress = "22gYFgCNLcyRrLhrMtBSq3uwRhvfCA7wUGzG8QzCycqc";
-  
-  // Datos de precio fijados a la fecha actual (16 de Junio de 2026)
-  const solPriceUsd = 73.73; 
-  const argPriceUsd = 0.01;
+
+  // Efecto para consultar el precio real de mercado al cargar la web
+  useEffect(() => {
+    const obtenerPrecioSOL = async () => {
+      try {
+        const respuesta = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const datos = await respuesta.json();
+        if (datos.solana && datos.solana.usd) {
+          setSolPriceUsd(datos.solana.usd);
+        }
+      } catch (error) {
+        console.error("Error consultando API. Usando precio base de respaldo.", error);
+      }
+    };
+    obtenerPrecioSOL();
+  }, []);
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -20,7 +34,7 @@ export default function AuraGoldWeb() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Lógica de simulación de Aura Gold recibidos
+  // Lógica del simulador
   const solAmount = parseFloat(solInput) || 0;
   const estimatedArg = (solAmount * solPriceUsd) / argPriceUsd;
   const isBelowMinimum = solAmount < 0.1 && solAmount > 0;
@@ -41,12 +55,12 @@ export default function AuraGoldWeb() {
               AURA GOLD
             </span>
           </div>
-          <nav className="flex gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
+          <nav className="flex flex-wrap gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800 justify-center">
             {['inicio', 'whitepaper', 'roadmap', 'preventa', 'simulador'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all capitalize ${
                   activeTab === tab 
                     ? 'bg-amber-500 text-neutral-950 shadow-md shadow-amber-500/10' 
                     : 'text-neutral-400 hover:text-neutral-200'
@@ -68,8 +82,8 @@ export default function AuraGoldWeb() {
             {/* Hero */}
             <div className="text-center space-y-6 py-8">
               <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold tracking-widest text-amber-400 uppercase bg-amber-500/10 border border-amber-500/20 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                Solana Ecosystem • Precio SOL: ${solPriceUsd} USD
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                SOL en vivo: ${solPriceUsd.toFixed(2)} USD
               </div>
               <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
                 Tu Reserva de Valor en la <br />
@@ -80,18 +94,18 @@ export default function AuraGoldWeb() {
               <p className="text-neutral-400 text-lg max-w-xl mx-auto leading-relaxed">
                 Libertad financiera, seguridad y protección contra la inflación. Más que un token, un refugio digital diseñado a largo plazo sin volatilidad artificial.
               </p>
-              <div className="flex justify-center gap-4 pt-4">
+              <div className="flex flex-wrap justify-center gap-4 pt-4">
                 <button 
                   onClick={() => setActiveTab('preventa')}
-                  className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold px-6 py-3 rounded-lg transition-all transform hover:-translate-y-0.5"
+                  className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold px-6 py-3 rounded-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
                 >
                   Unirse a la Preventa
                 </button>
                 <button 
                   onClick={() => setActiveTab('simulador')}
-                  className="border border-neutral-700 hover:border-neutral-500 bg-neutral-900 text-white font-medium px-6 py-3 rounded-lg transition-all"
+                  className="border border-neutral-700 hover:border-neutral-500 bg-neutral-900 text-white font-medium px-6 py-3 rounded-lg transition-all w-full sm:w-auto"
                 >
-                  Calcular Tokens
+                  Calcular Conversión
                 </button>
               </div>
             </div>
@@ -110,7 +124,7 @@ export default function AuraGoldWeb() {
                   </div>
                   <button 
                     onClick={() => handleCopy(mintAddress)}
-                    className="text-xs bg-neutral-900 hover:bg-neutral-800 text-amber-400 px-3 py-1.5 rounded border border-neutral-700 whitespace-nowrap"
+                    className="text-xs bg-neutral-900 hover:bg-neutral-800 text-amber-400 px-3 py-1.5 rounded border border-neutral-700 whitespace-nowrap w-full md:w-auto text-center"
                   >
                     {copied ? '¡Copiado!' : 'Copiar'}
                   </button>
@@ -126,6 +140,13 @@ export default function AuraGoldWeb() {
                   </div>
                 </div>
               </div>
+              <div className="flex flex-wrap gap-3 pt-2 text-xs">
+                <a href="https://solscan.io/token/22gYFgCNLcyRrLhrMtBSq3uwRhvfCA7wUGzG8QzCycqc" target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white underline">Ver en SolScan</a>
+                <span className="text-neutral-700">•</span>
+                <a href="https://explorer.solana.com/address/22gYFgCNLcyRrLhrMtBSq3uwRhvfCA7wUGzG8QzCycqc?cluster=mainnet" target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white underline">Ver en Solana Explorer</a>
+                <span className="text-neutral-700">•</span>
+                <a href="https://x.com/AuraGoldARG" target="_blank" rel="noreferrer" className="text-neutral-400 hover:text-white underline">Twitter Oficial</a>
+              </div>
             </div>
           </div>
         )}
@@ -136,14 +157,20 @@ export default function AuraGoldWeb() {
             <h2 className="text-3xl font-bold text-white border-b border-neutral-800 pb-4">Whitepaper de Visión</h2>
             <section className="space-y-3">
               <h3 className="text-xl font-semibold text-amber-400">1. Filosofía Antinflacionaria</h3>
-              <p className="text-neutral-400 leading-relaxed">
-                Aura Gold (ARG) nace bajo la premisa de ser una alternativa financiera sólida dentro de la blockchain de Solana. Rechazamos categóricamente el modelo de las <em>memecoins</em> efímeras. Nuestra estructura está diseñada para inversores que buscan construir valor a largo plazo.
+              <p className="text-neutral-400 leading-relaxed text-sm sm:text-base">
+                Aura Gold (ARG) nace bajo la premisa de ser una alternativa financiera sólida dentro de la blockchain de Solana. Rechazamos categóricamente el modelo de las <em>memecoins</em> efímeras y los esquemas rápidos de salida. Nuestra estructura está diseñada para inversores que buscan construir valor a largo plazo.
               </p>
             </section>
             <section className="space-y-3">
               <h3 className="text-xl font-semibold text-amber-400">2. Los 3 Pilares de la Reserva</h3>
-              <p className="text-neutral-400 leading-relaxed">
-                La tesorería diversificará sus fondos en tres activos clave para asegurar robustez matemática: **PAXGold** (respaldo en oro físico), **USDT** (estabilidad fiduciaria) y **Solana** (potencial tecnológico).
+              <p className="text-neutral-400 leading-relaxed text-sm sm:text-base">
+                Para garantizar solidez matemática frente a la volatilidad, la tesorería diversificará sus fondos en tres activos clave: **PAXGold** (respaldo en oro físico), **USDT** (estabilidad fiduciaria) y **Solana** (potencial de ecosistema de red).
+              </p>
+            </section>
+            <section className="space-y-3">
+              <h3 className="text-xl font-semibold text-amber-400">3. Suministro y Deflación por Quemas</h3>
+              <p className="text-neutral-400 leading-relaxed text-sm sm:text-base">
+                Con un suministro inicial fijo, el protocolo implementará quemas de tokens en fases estratégicas para inducir una escasez programada en beneficio de los sostenedores del activo.
               </p>
             </section>
           </div>
@@ -156,16 +183,23 @@ export default function AuraGoldWeb() {
             <div className="space-y-8 relative border-l-2 border-neutral-800 pl-6 ml-4">
               <div className="relative">
                 <span className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-amber-500 ring-4 ring-neutral-950"></span>
-                <h3 className="text-lg font-bold text-white">Fase 1: Preventa Manual y Contrato</h3>
+                <h3 className="text-lg font-bold text-white">Fase 1: Preventa Manual y Financiación</h3>
                 <p className="text-sm text-neutral-400 mt-1">
-                  Distribución inicial controlada del 30% del suministro. Recaudación asignada directamente al desarrollo y auditoría del Smart Contract automatizado.
+                  Distribución inicial controlada del 30% del suministro a precio fijo ($0.01 USD). La recaudación se asignará al desarrollo y despliegue del Smart Contract automatizado.
                 </p>
               </div>
               <div className="relative">
                 <span className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-neutral-700 ring-4 ring-neutral-950"></span>
-                <h3 className="text-lg font-bold text-neutral-300">Fase 2: Listado en Raydium</h3>
+                <h3 className="text-lg font-bold text-neutral-300">Fase 2: Automatización y Raydium</h3>
                 <p className="text-sm text-neutral-400 mt-1">
-                  Envío masivo programado de tokens a las wallets compradoras y apertura de la pool de liquidez en Raydium.
+                  Despliegue de los contratos de liquidez automatizados, envío masivo y directo de los tokens correspondientes a las wallets de origen y listado oficial de intercambio en Raydium.
+                </p>
+              </div>
+              <div className="relative">
+                <span className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-neutral-700 ring-4 ring-neutral-950"></span>
+                <h3 className="text-lg font-bold text-neutral-300">Fase 3: Ejecución de Reservas y Quemas</h3>
+                <p className="text-sm text-neutral-400 mt-1">
+                  Puesta en marcha del fondo de respaldo diversificado en los tres pilares estratégicos y activación de los primeros ciclos de quema de tokens.
                 </p>
               </div>
             </div>
@@ -176,44 +210,45 @@ export default function AuraGoldWeb() {
         {activeTab === 'preventa' && (
           <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold text-white">Fase de Preventa</h2>
-              <p className="text-neutral-400 text-sm">Instrucciones y requerimientos de red imperativos.</p>
+              <h2 className="text-3xl font-bold text-white">Fase de Preventa Estratégica</h2>
+              <p className="text-neutral-400 text-sm">Distribución manual regulada con requerimientos imperativos.</p>
             </div>
 
-            {/* AVISO IMPORTANTE DE MÍNIMO DE COMPRA */}
+            {/* ERROR / ADVERTENCIA DEL MÍNIMO */}
             <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4 flex gap-3 items-start">
               <span className="text-red-400 text-xl font-bold leading-none">⚠️</span>
               <div>
-                <h4 className="text-red-400 font-bold text-sm uppercase tracking-wide">Cláusula de Transferencia Mínima</h4>
+                <h4 className="text-red-400 font-bold text-sm uppercase tracking-wide">Cláusula de Transferencia Mínima Obligatoria</h4>
                 <p className="text-red-200/80 text-xs mt-1 leading-relaxed">
-                  El monto mínimo de participación es estrictamente de <strong>0.1 SOL</strong>. Cualquier transferencia recibida en nuestra billetera de custodia por un valor inferior a 0.1 SOL <strong>no será computada, no generará derecho a asignación de tokens ARG y no será reembolsada</strong> debido a costos operacionales de red.
+                  El monto mínimo para participar en la preventa es de <strong>0.1 SOL</strong>. Cualquier transferencia enviada a la billetera de custodia por un valor inferior a este límite <strong>no será procesada, no otorgará asignación de tokens ARG y no será reembolsada</strong> debido a costos operacionales de red.
                 </p>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
-                <h3 className="text-lg font-bold text-amber-400">¿Cómo enviar tus fondos?</h3>
-                <ol className="space-y-3 text-sm text-neutral-300 list-decimal list-inside">
-                  <li>Envía un mínimo de 0.1 SOL desde tu wallet personal.</li>
-                  <li>No envíes desde exchanges centralizados (Binance, Bybit, etc.).</li>
-                  <li>Al cerrarse la fase, recibirás tus tokens directamente.</li>
+                <h3 className="text-lg font-bold text-amber-400">¿Cómo participar?</h3>
+                <ol className="space-y-3 text-sm text-neutral-300 list-decimal list-inside leading-relaxed">
+                  <li>Envía un monto mínimo de 0.1 SOL a la dirección de custodia oficial expuesta debajo.</li>
+                  <li>Usa siempre una wallet descentralizada propia (Phantom, Solflare). <strong>No envíes desde exchanges.</strong></li>
+                  <li>Al cerrarse la preventa total (o subfases), se enviarán tus tokens ARG en un airdrop masivo directo a tu wallet de origen.</li>
                 </ol>
                 <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 space-y-1">
-                  <p className="text-xs text-neutral-500 font-mono">WALLET DE CUSTODIA OFICIAL</p>
+                  <p className="text-xs text-neutral-500 font-mono">BILLETERA DE CUSTODIA OFICIAL</p>
                   <p className="text-xs text-neutral-300 font-mono break-all">{walletCustodia}</p>
-                  <button onClick={() => handleCopy(walletCustodia)} className="text-xs text-amber-400 font-medium hover:underline pt-1 block">
-                    {copied ? '¡Copiado!' : 'Copiar wallet'}
+                  <button onClick={() => handleCopy(walletCustodia)} className="text-xs text-amber-400 font-medium hover:underline pt-1 block text-left">
+                    {copied ? '¡Copiado con éxito!' : 'Copiar dirección de wallet'}
                   </button>
                 </div>
               </div>
 
               <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
-                <h3 className="text-lg font-bold text-purple-400">Visualizar en Phantom</h3>
-                <ul className="space-y-2 text-sm text-neutral-300">
-                  <li>1. Abre Phantom Wallet y pulsa "+".</li>
-                  <li>2. Selecciona "Administrar lista de tokens".</li>
-                  <li>3. Pega la Mint Address oficial del proyecto.</li>
+                <h3 className="text-lg font-bold text-purple-400">Visualizar en Phantom Wallet</h3>
+                <p className="text-xs text-neutral-400">Sigue estos pasos dentro de tu interfaz para integrar el rastreo del saldo:</p>
+                <ul className="space-y-3 text-sm text-neutral-300">
+                  <li><span className="text-purple-400 font-bold">1.</span> Abre Phantom y presiona el botón "+" o "Administrar lista de tokens".</li>
+                  <li><span className="text-purple-400 font-bold">2.</span> Pega la Mint Address oficial del proyecto: <code className="text-xs text-neutral-400 block p-1 bg-neutral-950 rounded mt-1 font-mono break-all">{mintAddress}</code></li>
+                  <li><span className="text-purple-400 font-bold">3.</span> Confirma la agregación. El balance de tus tokens aparecerá listado de inmediato.</li>
                 </ul>
               </div>
             </div>
@@ -225,7 +260,7 @@ export default function AuraGoldWeb() {
           <div className="max-w-md mx-auto bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 animate-fadeIn">
             <div className="text-center">
               <h3 className="text-xl font-bold text-white">Calculadora de Conversión ARG</h3>
-              <p className="text-neutral-400 text-xs mt-1">Calculado en base al precio de SOL de hoy (${solPriceUsd} USD)</p>
+              <p className="text-neutral-400 text-xs mt-1">Conversión automatizada calculada con el precio actual de SOL (${solPriceUsd.toFixed(2)} USD)</p>
             </div>
 
             <div className="space-y-4">
@@ -245,7 +280,7 @@ export default function AuraGoldWeb() {
                 </div>
               </div>
 
-              {/* Error por debajo del mínimo */}
+              {/* Validación de mínimo */}
               {isBelowMinimum && (
                 <p className="text-red-400 text-xs font-medium bg-red-950/30 p-2 rounded border border-red-900/50">
                   ⚠️ Error: El monto ingresado es menor al mínimo requerido de 0.1 SOL. Esta transacción sería descartada.
@@ -253,16 +288,16 @@ export default function AuraGoldWeb() {
               )}
 
               <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 space-y-2">
-                <p className="text-xs text-neutral-500 uppercase tracking-wider">Monto estimado a recibir</p>
+                <p className="text-xs text-neutral-500 uppercase tracking-wider">Tokens estimados a recibir</p>
                 <div className="flex justify-between items-baseline">
                   <span className="text-2xl font-black font-mono text-amber-400">
-                    {isBelowMinimum ? '0' : estimatedArg.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    {isBelowMinimum ? '0' : estimatedArg.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                   <span className="text-sm font-bold text-neutral-400 font-mono">ARG Tokens</span>
                 </div>
-                <div className="text-[11px] text-neutral-500 border-t border-neutral-900 pt-2 space-y-0.5">
-                  <p>• Equivalencia en USD: ${(solAmount * solPriceUsd).toFixed(2)}</p>
-                  <p>• Costo por unidad ARG: ${argPriceUsd} USD</p>
+                <div className="text-[11px] text-neutral-500 border-t border-neutral-900 pt-2 space-y-0.5 font-mono">
+                  <p>• Valor de tus SOL en USD: ${(solAmount * solPriceUsd).toFixed(2)}</p>
+                  <p>• Precio fijo por unidad ARG: ${argPriceUsd} USD</p>
                 </div>
               </div>
 
@@ -275,7 +310,7 @@ export default function AuraGoldWeb() {
                     : 'bg-amber-500 hover:bg-amber-400 text-neutral-950'
                 }`}
               >
-                Ir a depositar fondos
+                Ver instrucciones de depósito
               </button>
             </div>
           </div>
@@ -286,12 +321,12 @@ export default function AuraGoldWeb() {
       {/* FOOTER & DISCLAIMER */}
       <footer className="border-t border-neutral-900 bg-neutral-950 text-neutral-500 text-xs mt-24 py-12">
         <div className="max-w-4xl mx-auto px-4 space-y-6">
-          <div className="bg-neutral-900/50 p-4 rounded-xl border border-neutral-800 text-justify leading-relaxed">
-            <strong>Disclaimer Regulatorio:</strong> Ninguna persona está obligada a invertir en Aura Gold (ARG). Toda asignación de capital corre bajo riesgo y responsabilidad absoluta del usuario (DYOR). No comprometa nunca capital que no esté completamente dispuesto a perder debido a la volatilidad implícita en los criptoactivos. Las transacciones menores a 0.1 SOL no se procesarán por motivos estructurales.
+          <div className="bg-neutral-900/50 p-4 rounded-xl border border-neutral-800 text-justify leading-relaxed text-[11px] sm:text-xs">
+            <strong>Disclaimer Regulatorio e Independencia Financiera:</strong> Ninguna persona o entidad asociada está obligada o coaccionada a invertir fondos en el ecosistema del token Aura Gold (ARG). Toda asignación voluntaria de capital corre bajo riesgo, ventura y responsabilidad absoluta del usuario, asumiendo que ha ejecutado sus debidas investigaciones independientes (DYOR). No comprometa nunca capital o recursos financieros que no esté completamente en disposición de perder debido a la extrema volatilidad intrínseca del mercado cripto global. Las transferencias inferiores al límite de 0.1 SOL quedan anuladas por costes de gas.
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left text-neutral-600">
-            <p>© 2026 Aura Gold Project. Desarrollado con integridad en Solana Network.</p>
-            <p>Twitter: @AuraGoldARG</p>
+            <p>© 2026 Aura Gold Project. Desarrollado con integridad en la red Solana.</p>
+            <p className="font-mono">Mint Address verificado: 22gYFgCN...Cycqc</p>
           </div>
         </div>
       </footer>
